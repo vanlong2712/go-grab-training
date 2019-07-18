@@ -55,7 +55,7 @@ func eval(text string) error {
 	case "/":
 		if b == 0 && op == "/" {
 			err = errors.New("Invalid operand")
-			return
+			return err
 		}
 		fmt.Println(a, op, b, "=", a / b)
 	case "*":
