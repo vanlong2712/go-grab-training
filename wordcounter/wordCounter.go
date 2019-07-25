@@ -56,7 +56,6 @@ func WordCounter(filename string, words []Word, waitGroup *sync.WaitGroup, out c
 	}
 
 	out <- FileWords{file.Name(), words}
-	file.Close()
 }
 
 
