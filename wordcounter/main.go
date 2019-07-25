@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	// For who does not know :D
+	// PLEASE RUN THIS IN TERMINAL: go run *.go data/story1.txt data/story2.txt
 	if len(os.Args) < 2 {
 		fmt.Println("Expected at least one filename.")
 		os.Exit(1)
