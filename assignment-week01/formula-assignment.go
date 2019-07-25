@@ -25,7 +25,7 @@ func main() {
 }
 
 func parse(text string) (a float64, b float64, op string, err error) {
-	expr := strings.Split(text, " ")
+	expr := strings.Fields(text)
 	if len(expr) != 3 {
 		err = errors.New("Invalid length")
 		return
@@ -53,8 +53,8 @@ func eval(text string) error {
 	case "-":
 		fmt.Println(a, op, b, "=", a - b)
 	case "/":
-		if b == 0 && op == "/" {
-			err = errors.New("Invalid operand")
+		if b == 0 {
+			err = errors.New("Cannot divide zero")
 			return err
 		}
 		fmt.Println(a, op, b, "=", a / b)

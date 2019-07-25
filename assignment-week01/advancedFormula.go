@@ -12,11 +12,12 @@ import (
 type Base int
 
 const (
-	OPERAND Base = 1
-	NUMBER  Base = 2
+	operand Base = iota + 1
+	number
 )
 
 func main() {
+	fmt.Println(operand, number)
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print("> ")
 	for scanner.Scan() {
@@ -37,8 +38,7 @@ func eval(text string) (string, error) {
 	var result float64
 	var str string
 	skip := false
-	a := strings.Split(text, " ")
-	a = deleteEmpty(a)
+	a := strings.Fields(text)
 	if getIndexOfArray(a[0], []string{"*", "/"}) > -1 {
 		err := errors.New(`The first element is invalid, it must be either number or (*) or (/)`)
 		return str, err
@@ -54,18 +54,18 @@ func eval(text string) (string, error) {
 		}
 		c, err := strconv.ParseFloat(value, 10)
 		if err != nil {
-			currentType = OPERAND
+			currentType = operand
 			if getIndexOfArray(value, []string{"+", "-", "*", "/"}) < 0 {
 				err := fmt.Errorf(`character at index %d does not match`, i)
 				return str, err
 			}
 		} else {
-			currentType = NUMBER
+			currentType = number
 		}
 
 		if prevType != 0 && prevType == currentType {
 			var mType string
-			if currentType == OPERAND {
+			if currentType == operand {
 				mType = "number"
 			} else {
 				mType = "operand"
@@ -73,7 +73,7 @@ func eval(text string) (string, error) {
 			err := fmt.Errorf(`character at index %d must be %s`, i, mType)
 			return str, err
 		}
-		if currentType == OPERAND {
+		if currentType == operand {
 			d, err := strconv.ParseFloat(a[i+1], 10)
 			if err != nil {
 				err := fmt.Errorf(`character at index %d must be %s`, i + 1, "number")
@@ -81,7 +81,7 @@ func eval(text string) (string, error) {
 			}
 			result, err = calc(result, d, value)
 			skip = true
-			currentType = NUMBER
+			currentType = number
 		} else {
 			result = c
 		}
@@ -89,16 +89,6 @@ func eval(text string) (string, error) {
 	}
 	str = strings.Join(a, " ") + " = " + fmt.Sprintf("%g", result)
 	return str, nil
-}
-
-func deleteEmpty(s []string) []string {
-	var r []string
-	for _, str := range s {
-		if str != "" {
-			r = append(r, str)
-		}
-	}
-	return r
 }
 
 func getIndexOfArray(text string, slice []string) int {
