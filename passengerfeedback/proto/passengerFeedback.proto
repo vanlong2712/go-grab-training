@@ -6,7 +6,7 @@ service Feedback {
     rpc addPassengerFeedback (PassengerFeedbackRequest) returns (PassengerFeedbackResponse) {}
     rpc getFeedbackByPassengerId (GetPassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackSliceResponse) {}
     rpc getFeedbackByBookingCode (PassengerFeedbackByBookingCodeRequest) returns (PassengerFeedbackResponse) {}
-    rpc deleteFeedbackByPassengerId (DeletePassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackResponse) {}
+    rpc deleteFeedbackByPassengerId (DeletePassengerFeedbackByPassengerIdRequest) returns (ErrorCodeAndMessageResponse) {}
 }
 
 enum Error {
@@ -50,4 +50,9 @@ message PassengerFeedbackByBookingCodeRequest {
 
 message DeletePassengerFeedbackByPassengerIdRequest {
     int32 passengerId = 1;
+}
+
+message ErrorCodeAndMessageResponse {
+    Error errorCode = 1;
+    string msg = 2;
 }

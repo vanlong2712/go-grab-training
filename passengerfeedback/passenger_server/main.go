@@ -3,6 +3,7 @@ package main
 import (
 	pb "../proto"
 	"context"
+	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -39,16 +40,20 @@ func (s *server) AddPassengerFeedback(ctx context.Context, in *pb.PassengerFeedb
 
 func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPassengerFeedbackByPassengerIdRequest) (out *pb.PassengerFeedbackSliceResponse, err error) {
 	out = new(pb.PassengerFeedbackSliceResponse)
+	fmt.Println("passengerId", in.PassengerId)
 	if len(feedbacks) > 0 {
-		var sliceFeedbacks []*pb.PassengerFeedback
-		for _, v := range feedbacks {
+		var sliceFeedbacks []string
+		for k, v := range feedbacks {
 			if v.PassengerId == in.PassengerId {
-				sliceFeedbacks = append(sliceFeedbacks, &v)
+				fmt.Println("v, in", v.PassengerId, in.PassengerId, v)
+				sliceFeedbacks = append(sliceFeedbacks, k)
 			}
 		}
 
+		fmt.Println("sliceFeedbacks", sliceFeedbacks)
+
 		if dataLength := len(sliceFeedbacks); dataLength < int(in.Offset) {
-			sliceFeedbacks = []*pb.PassengerFeedback{}
+			sliceFeedbacks = []string{}
 		} else if dataLength < int(in.Offset+in.Limit) {
 			sliceFeedbacks = sliceFeedbacks[in.Offset:]
 		} else {
@@ -57,10 +62,15 @@ func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPasseng
 
 		if num := len(sliceFeedbacks); num > 0 {
 			out.Msg = "The passenger has " + strconv.Itoa(num) + " feedbacks"
+			for i := 0; i < num ; i++ {
+				v := feedbacks[sliceFeedbacks[i]]
+				out.Data = append(out.Data, &v)
+			}
+
 		} else {
 			out.Msg = "The passenger has no feedback"
 		}
-		out.Data = sliceFeedbacks
+
 		return out, nil
 	}
 
@@ -69,11 +79,19 @@ func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPasseng
 }
 
 func (s *server) GetFeedbackByBookingCode(ctx context.Context, in *pb.PassengerFeedbackByBookingCodeRequest) (*pb.PassengerFeedbackResponse, error) {
-	panic("implement me")
+	if feedback, ok := feedbacks[in.BookingCode]; ok {
+		return &pb.PassengerFeedbackResponse{Data: &feedback, Msg: "Success!", ErrorCode: pb.Error_SUCCESS}, nil
+	}
+	return &pb.PassengerFeedbackResponse{Msg: "There is no feedback at booking code " + in.BookingCode, ErrorCode: pb.Error_FAIL}, nil
 }
 
-func (s *server) DeleteFeedbackByPassengerId(ctx context.Context, in *pb.DeletePassengerFeedbackByPassengerIdRequest) (*pb.PassengerFeedbackResponse, error) {
-	panic("implement me")
+func (s *server) DeleteFeedbackByPassengerId(ctx context.Context, in *pb.DeletePassengerFeedbackByPassengerIdRequest) (*pb.ErrorCodeAndMessageResponse, error) {
+	for k,v := range feedbacks {
+		if v.PassengerId == in.PassengerId {
+			delete(feedbacks, k)
+		}
+	}
+	return &pb.ErrorCodeAndMessageResponse{Msg: "Success"}, nil
 }
 
 func main() {
