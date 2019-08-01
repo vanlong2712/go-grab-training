@@ -1,11 +1,10 @@
 package main
 
 import (
+	pb "../proto"
 	"context"
 	"fmt"
-	pb "github.com/vanlong2712/go-grab-training/passengerfeedback/proto"
 	"google.golang.org/grpc"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -41,11 +40,11 @@ func main() {
 			})
 
 			if err != nil {
-				log.Fatalf("could not add passenger: %v", err)
+				fmt.Println("could not add passenger:", err)
 			} else {
 				fmt.Println(r.Msg)
 				if r.ErrorCode == pb.Error_SUCCESS {
-					fmt.Printf("The booking code: %v, the passenger id: %d, the feedback: %v\n", r.Data.BookingCode, r.Data.PassengerId, r.Data.Feedback)
+					fmt.Println(r.Data.String())
 				}
 			}
 
@@ -54,5 +53,25 @@ func main() {
 	}()
 
 	wg.Wait()
+
+	fmt.Println("------------------------------------------------")
+	fmt.Println("----------GET FEEDBACK BY PASSENGER ID----------")
+
+	feedBackByPassenger, err := c.GetFeedbackByPassengerId(ctx, &pb.GetPassengerFeedbackByPassengerIdRequest{
+		PassengerId: 1,
+		Offset: 0,
+		Limit: 2,
+	})
+	if err != nil {
+		fmt.Println("could not get feedbacks by passenger:", err)
+	} else {
+		fmt.Println(feedBackByPassenger.Msg)
+
+		if feedBackByPassenger.ErrorCode == pb.Error_SUCCESS && len(feedBackByPassenger.Data) > 0 {
+			for _, v := range feedBackByPassenger.Data {
+				fmt.Println(v)
+			}
+		}
+	}
 
 }

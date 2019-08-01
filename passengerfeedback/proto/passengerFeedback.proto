@@ -4,14 +4,14 @@ package passengerfeedback;
 
 service Feedback {
     rpc addPassengerFeedback (PassengerFeedbackRequest) returns (PassengerFeedbackResponse) {}
-    rpc getFeedbackByPassengerId (GetPassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackSpliceResponse) {}
+    rpc getFeedbackByPassengerId (GetPassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackSliceResponse) {}
     rpc getFeedbackByBookingCode (PassengerFeedbackByBookingCodeRequest) returns (PassengerFeedbackResponse) {}
     rpc deleteFeedbackByPassengerId (DeletePassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackResponse) {}
 }
 
 enum Error {
-    FAIL = 0;
-    SUCCESS = 1;
+    SUCCESS = 0;
+    FAIL = 1;
 }
 
 message PassengerFeedback {
@@ -38,7 +38,7 @@ message GetPassengerFeedbackByPassengerIdRequest {
     int32 limit = 3;
 }
 
-message PassengerFeedbackSpliceResponse {
+message PassengerFeedbackSliceResponse {
     repeated PassengerFeedback data = 1;
     Error errorCode = 2;
     string msg = 3;

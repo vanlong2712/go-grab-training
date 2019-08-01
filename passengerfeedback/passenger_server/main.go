@@ -1,12 +1,12 @@
 package main
 
 import (
+	pb "../proto"
 	"context"
+	"google.golang.org/grpc"
 	"log"
 	"net"
-
-	pb "github.com/vanlong2712/go-grab-training/passengerfeedback/proto"
-	"google.golang.org/grpc"
+	"strconv"
 )
 
 const (
@@ -37,8 +37,35 @@ func (s *server) AddPassengerFeedback(ctx context.Context, in *pb.PassengerFeedb
 	}, nil
 }
 
-func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPassengerFeedbackByPassengerIdRequest) (*pb.PassengerFeedbackSpliceResponse, error) {
-	panic("implement me")
+func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPassengerFeedbackByPassengerIdRequest) (out *pb.PassengerFeedbackSliceResponse, err error) {
+	out = new(pb.PassengerFeedbackSliceResponse)
+	if len(feedbacks) > 0 {
+		var sliceFeedbacks []*pb.PassengerFeedback
+		for _, v := range feedbacks {
+			if v.PassengerId == in.PassengerId {
+				sliceFeedbacks = append(sliceFeedbacks, &v)
+			}
+		}
+
+		if dataLength := len(sliceFeedbacks); dataLength < int(in.Offset) {
+			sliceFeedbacks = []*pb.PassengerFeedback{}
+		} else if dataLength < int(in.Offset+in.Limit) {
+			sliceFeedbacks = sliceFeedbacks[in.Offset:]
+		} else {
+			sliceFeedbacks = sliceFeedbacks[in.Offset:in.Limit]
+		}
+
+		if num := len(sliceFeedbacks); num > 0 {
+			out.Msg = "The passenger has " + strconv.Itoa(num) + " feedbacks"
+		} else {
+			out.Msg = "The passenger has no feedback"
+		}
+		out.Data = sliceFeedbacks
+		return out, nil
+	}
+
+	out.Msg = "The Passenger has no feedback"
+	return out, nil
 }
 
 func (s *server) GetFeedbackByBookingCode(ctx context.Context, in *pb.PassengerFeedbackByBookingCodeRequest) (*pb.PassengerFeedbackResponse, error) {
