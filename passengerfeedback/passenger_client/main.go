@@ -14,18 +14,10 @@ import (
 )
 
 const (
-	address = "localhost:50052"
+	address = "localhost:50051"
 )
 
 var client pb.FeedbackClient
-
-var methods = map[int]string{
-	1: "Add Feedback",
-	2: "Get Feedback By PassengerID",
-	3: "Get Feedback By BookingCode",
-	4: "Delete Feedback",
-	5: "Stop the program",
-}
 
 func handleAddFeedback(c *gin.Context) {
 	var argument struct {
