@@ -15,6 +15,8 @@ const (
 	address = "localhost:50052"
 )
 
+var client pb.FeedbackClient
+
 var methods = map[int]string {
 	1: "Add Feedback",
 	2: "Get Feedback By PassengerID",
@@ -23,11 +25,11 @@ var methods = map[int]string {
 	5: "Stop the program",
 }
 
-func addAndPrintPassengerFeedback(c pb.FeedbackClient, bookingCode string, passengerId int32, feedback string, printMsg bool) {
+func addAndPrintPassengerFeedback(bookingCode string, passengerId int32, feedback string, printMsg bool) {
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	r, err := c.AddPassengerFeedback(ctx, &pb.PassengerFeedbackRequest{
+	r, err := client.AddPassengerFeedback(ctx, &pb.PassengerFeedbackRequest{
 		BookingCode: bookingCode,
 		PassengerId: passengerId,
 		Feedback:    feedback,
@@ -48,14 +50,14 @@ func addAndPrintPassengerFeedback(c pb.FeedbackClient, bookingCode string, passe
 
 }
 
-func generateSomeFeedback(c pb.FeedbackClient , out chan<- bool, number int) {
+func generateSomeFeedback(out chan<- bool, number int) {
 	for i := 1; i <= number; i++ {
-		addAndPrintPassengerFeedback(c, "DRIVE0" + strconv.Itoa(i), 1, "Good service.", false)
+		addAndPrintPassengerFeedback("DRIVE0" + strconv.Itoa(i), 1, "Good service.", false)
 	}
 	out <- true
 }
 
-func addPassengerFromInput(c pb.FeedbackClient) {
+func addPassengerFromInput() {
 	var passengerId int32
 	var bookingCode string
 	var feedback string
@@ -86,10 +88,10 @@ func addPassengerFromInput(c pb.FeedbackClient) {
 		fmt.Println("Feedback expected at least one character.")
 		return
 	}
-	addAndPrintPassengerFeedback(c, bookingCode, passengerId, feedback, true)
+	addAndPrintPassengerFeedback(bookingCode, passengerId, feedback, true)
 }
 
-func getFeedbackByPassengerIdFromInput(c pb.FeedbackClient) {
+func getFeedbackByPassengerIdFromInput() {
 	var passengerId int32
 	var offset int32
 	var limit int32
@@ -115,7 +117,7 @@ func getFeedbackByPassengerIdFromInput(c pb.FeedbackClient) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.GetFeedbackByPassengerId(ctx, &pb.GetPassengerFeedbackByPassengerIdRequest{
+	r, err := client.GetFeedbackByPassengerId(ctx, &pb.GetPassengerFeedbackByPassengerIdRequest{
 		PassengerId: passengerId,
 		Offset: offset,
 		Limit: limit,
@@ -134,7 +136,7 @@ func getFeedbackByPassengerIdFromInput(c pb.FeedbackClient) {
 	}
 }
 
-func getFeedbackByBookingCodeFromInput(c pb.FeedbackClient) {
+func getFeedbackByBookingCodeFromInput() {
 	var bookingCode string
 	fmt.Print("Input Booking Code: ")
 
@@ -153,7 +155,7 @@ func getFeedbackByBookingCodeFromInput(c pb.FeedbackClient) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.GetFeedbackByBookingCode(ctx, &pb.PassengerFeedbackByBookingCodeRequest{
+	r, err := client.GetFeedbackByBookingCode(ctx, &pb.PassengerFeedbackByBookingCodeRequest{
 		BookingCode: bookingCode,
 	})
 
@@ -169,7 +171,7 @@ func getFeedbackByBookingCodeFromInput(c pb.FeedbackClient) {
 
 }
 
-func deleteFeedbackByPassengerIdFromInput(c pb.FeedbackClient) {
+func deleteFeedbackByPassengerIdFromInput() {
 	var passengerId int32
 
 	fmt.Print("Input Passenger Id: ")
@@ -184,7 +186,7 @@ func deleteFeedbackByPassengerIdFromInput(c pb.FeedbackClient) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	r, err := c.DeleteFeedbackByPassengerId(ctx, &pb.DeletePassengerFeedbackByPassengerIdRequest{PassengerId:passengerId})
+	r, err := client.DeleteFeedbackByPassengerId(ctx, &pb.DeletePassengerFeedbackByPassengerIdRequest{PassengerId:passengerId})
 	if err != nil {
 		fmt.Println("could not delete feedback by passenger:", err)
 		return
@@ -200,7 +202,7 @@ func main() {
 		fmt.Println("did not connect:", err)
 	}
 	defer conn.Close()
-	c := pb.NewFeedbackClient(conn)
+	client = pb.NewFeedbackClient(conn)
 
 	fmt.Println("Before you choose a method, I'll add some passenger feedbacks to the local variable for passenger Id 1 " +
 		"with booking from DRIVE01 to DRIVE010. ")
@@ -208,7 +210,7 @@ func main() {
 
 	chanInitFeedback := make(chan bool)
 
-	go generateSomeFeedback(c, chanInitFeedback, number)
+	go generateSomeFeedback(chanInitFeedback, number)
 
 	<-chanInitFeedback
 
@@ -237,17 +239,16 @@ func main() {
 
 		switch methodID {
 		case 1:
-			addPassengerFromInput(c)
-			fmt.Println("Thank you for the information")
+			addPassengerFromInput()
 			continue
 		case 2:
-			getFeedbackByPassengerIdFromInput(c)
+			getFeedbackByPassengerIdFromInput()
 			continue
 		case 3:
-			getFeedbackByBookingCodeFromInput(c)
+			getFeedbackByBookingCodeFromInput()
 			continue
 		case 4:
-			deleteFeedbackByPassengerIdFromInput(c)
+			deleteFeedbackByPassengerIdFromInput()
 			continue
 		case 5:
 			fmt.Println("The program stops")
