@@ -5,13 +5,13 @@ package passengerfeedback;
 service Feedback {
     rpc addPassengerFeedback (PassengerFeedbackRequest) returns (PassengerFeedbackResponse) {}
     rpc getFeedbackByPassengerId (GetPassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackSliceResponse) {}
-    rpc getFeedbackByBookingCode (PassengerFeedbackByBookingCodeRequest) returns (PassengerFeedbackResponse) {}
+    rpc getFeedbackByBookingCode (PassengerFeedbackByBookingCodeRequest) returns (PassengerFeedbackSliceResponse) {}
     rpc deleteFeedbackByPassengerId (DeletePassengerFeedbackByPassengerIdRequest) returns (ErrorCodeAndMessageResponse) {}
 }
 
 enum Error {
     SUCCESS = 0;
-    FAIL = 1;
+    FAIL = -1;
 }
 
 message PassengerFeedback {
@@ -46,6 +46,8 @@ message PassengerFeedbackSliceResponse {
 
 message PassengerFeedbackByBookingCodeRequest {
      string bookingCode = 1;
+     int32 offset = 2;
+     int32 limit = 3;
 }
 
 message DeletePassengerFeedbackByPassengerIdRequest {
