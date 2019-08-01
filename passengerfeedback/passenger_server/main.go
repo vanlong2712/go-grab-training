@@ -3,7 +3,6 @@ package main
 import (
 	pb "../proto"
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -40,17 +39,13 @@ func (s *server) AddPassengerFeedback(ctx context.Context, in *pb.PassengerFeedb
 
 func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPassengerFeedbackByPassengerIdRequest) (out *pb.PassengerFeedbackSliceResponse, err error) {
 	out = new(pb.PassengerFeedbackSliceResponse)
-	fmt.Println("passengerId", in.PassengerId)
 	if len(feedbacks) > 0 {
 		var sliceFeedbacks []string
 		for k, v := range feedbacks {
 			if v.PassengerId == in.PassengerId {
-				fmt.Println("v, in", v.PassengerId, in.PassengerId, v)
 				sliceFeedbacks = append(sliceFeedbacks, k)
 			}
 		}
-
-		fmt.Println("sliceFeedbacks", sliceFeedbacks)
 
 		if dataLength := len(sliceFeedbacks); dataLength < int(in.Offset) {
 			sliceFeedbacks = []string{}
