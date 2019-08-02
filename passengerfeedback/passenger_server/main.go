@@ -13,28 +13,27 @@ const (
 	port = ":50051"
 )
 
-var feedbacks = map[int32][]pb.PassengerFeedback{}
+var feedbacks []pb.PassengerFeedback
 
 type server struct{}
 
 func (s *server) AddPassengerFeedback(ctx context.Context, in *pb.PassengerFeedbackRequest) (*pb.PassengerFeedbackResponse, error) {
-	if feedbackByPassenger, ok := feedbacks[in.PassengerId]; ok {
-		for _, fb := range feedbackByPassenger {
-			if fb.BookingCode == in.BookingCode {
+		for _, fb := range feedbacks {
+			if fb.BookingCode == in.BookingCode && fb.PassengerId == in.PassengerId {
 				return &pb.PassengerFeedbackResponse{
 					Msg:       "Feedback exists",
 					ErrorCode: pb.Error_FAIL,
 				}, nil
 			}
 		}
-	}
+
 
 	pfb := pb.PassengerFeedback{
 		BookingCode: in.BookingCode,
 		PassengerId: in.PassengerId,
 		Feedback:    in.Feedback,
 	}
-	feedbacks[in.PassengerId] = append(feedbacks[in.PassengerId], pfb)
+	feedbacks = append(feedbacks, pfb)
 	return &pb.PassengerFeedbackResponse{
 		Data:      &pfb,
 		Msg:       "Thank you for your feedback",
@@ -45,28 +44,23 @@ func (s *server) AddPassengerFeedback(ctx context.Context, in *pb.PassengerFeedb
 func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPassengerFeedbackByPassengerIdRequest) (out *pb.PassengerFeedbackSliceResponse, err error) {
 	out = new(pb.PassengerFeedbackSliceResponse)
 	if len(feedbacks) > 0 {
-		var sliceFeedbacks []int32
-		passengerFeedbacks := feedbacks[in.PassengerId]
-
-		if dataLength := int32(len(passengerFeedbacks)); dataLength < in.Offset {
-			sliceFeedbacks = []int32{}
-		} else if dataLength < in.Offset+in.Limit {
-			for i := in.Offset; i < dataLength; i++ {
-				sliceFeedbacks = append(sliceFeedbacks, i)
-			}
-		} else {
-			for i := in.Offset; i < in.Limit; i++ {
-				sliceFeedbacks = append(sliceFeedbacks, i)
+		var fbByPassengerId []pb.PassengerFeedback
+		for i := 0; i < len(feedbacks); i++ {
+			if in.PassengerId == feedbacks[i].PassengerId {
+				fbByPassengerId = append(fbByPassengerId, feedbacks[i])
 			}
 		}
 
-		if num := len(sliceFeedbacks); num > 0 {
-			out.Msg = "The passenger has " + strconv.Itoa(num) + " feedbacks"
-			for i := 0; i < num ; i++ {
-				v := feedbacks[in.PassengerId][i]
-				out.Data = append(out.Data, &v)
+		for i := in.Offset; i < in.Offset + in.Limit; i++ {
+			if len(fbByPassengerId) > int(i) {
+				out.Data = append(out.Data, &fbByPassengerId[i])
+			} else {
+				break
 			}
+		}
 
+		if num := len(out.Data); num > 0 {
+			out.Msg = "The passenger has " + strconv.Itoa(num) + " feedbacks"
 		} else {
 			out.Msg = "The passenger has no feedback"
 		}
@@ -81,19 +75,19 @@ func (s *server) GetFeedbackByPassengerId(ctx context.Context, in *pb.GetPasseng
 func (s *server) GetFeedbackByBookingCode(ctx context.Context, in *pb.PassengerFeedbackByBookingCodeRequest) (*pb.PassengerFeedbackSliceResponse, error) {
 	out := new(pb.PassengerFeedbackSliceResponse)
 	if len(feedbacks) > 0 {
-		for _, feedbackByPassenger := range feedbacks {
-			for k, fb := range feedbackByPassenger {
-				if fb.BookingCode == in.BookingCode {
-					out.Data = append(out.Data, &feedbackByPassenger[k])
-				}
+		var fbByBookingCode []pb.PassengerFeedback
+		for i := 0; i < len(feedbacks); i++ {
+			if in.BookingCode == feedbacks[i].BookingCode {
+				fbByBookingCode = append(fbByBookingCode, feedbacks[i])
 			}
 		}
-		if dataLength := int32(len(out.Data)); dataLength < in.Offset {
-			out.Data = out.Data[0:0]
-		} else if dataLength < in.Offset+in.Limit {
-			out.Data = out.Data[in.Offset:]
-		} else {
-			out.Data = out.Data[in.Offset:in.Limit]
+
+		for i := in.Offset; i < in.Offset + in.Limit; i++ {
+			if len(fbByBookingCode) > int(i) {
+				out.Data = append(out.Data, &fbByBookingCode[i])
+			} else {
+				break
+			}
 		}
 
 		if num := len(out.Data); num > 0 {
@@ -111,8 +105,11 @@ func (s *server) GetFeedbackByBookingCode(ctx context.Context, in *pb.PassengerF
 
 func (s *server) DeleteFeedbackByPassengerId(ctx context.Context, in *pb.DeletePassengerFeedbackByPassengerIdRequest) (*pb.ErrorCodeAndMessageResponse, error) {
 	if len(feedbacks) > 0 {
-		if _, ok := feedbacks[in.PassengerId]; ok {
-			delete(feedbacks, in.PassengerId)
+		for i := 0; i < len(feedbacks); i++ {
+			if feedbacks[i].PassengerId == in.PassengerId {
+				feedbacks = append(feedbacks[:i], feedbacks[i+1:]...)
+				i--
+			}
 		}
 	}
 	return &pb.ErrorCodeAndMessageResponse{Msg: "Success"}, nil
