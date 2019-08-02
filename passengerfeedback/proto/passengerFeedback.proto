@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package passengerfeedback;
+
+service Feedback {
+    rpc addPassengerFeedback (PassengerFeedbackRequest) returns (PassengerFeedbackResponse) {}
+    rpc getFeedbackByPassengerId (GetPassengerFeedbackByPassengerIdRequest) returns (PassengerFeedbackSliceResponse) {}
+    rpc getFeedbackByBookingCode (PassengerFeedbackByBookingCodeRequest) returns (PassengerFeedbackSliceResponse) {}
+    rpc deleteFeedbackByPassengerId (DeletePassengerFeedbackByPassengerIdRequest) returns (ErrorCodeAndMessageResponse) {}
+}
+
+enum Error {
+    SUCCESS = 0;
+    FAIL = -1;
+}
+
+message PassengerFeedback {
+    string bookingCode = 1;
+    int32 passengerId = 2;
+    string feedback = 3;
+}
+
+message PassengerFeedbackRequest {
+    string bookingCode = 1;
+    int32 passengerId = 2;
+    string feedback = 3;
+}
+
+message PassengerFeedbackResponse {
+    PassengerFeedback data = 1;
+    Error errorCode = 2;
+    string msg = 3;
+}
+
+message GetPassengerFeedbackByPassengerIdRequest {
+    int32 passengerId = 1;
+    int32 offset = 2;
+    int32 limit = 3;
+}
+
+message PassengerFeedbackSliceResponse {
+    repeated PassengerFeedback data = 1;
+    Error errorCode = 2;
+    string msg = 3;
+}
+
+message PassengerFeedbackByBookingCodeRequest {
+     string bookingCode = 1;
+     int32 offset = 2;
+     int32 limit = 3;
+}
+
+message DeletePassengerFeedbackByPassengerIdRequest {
+    int32 passengerId = 1;
+}
+
+message ErrorCodeAndMessageResponse {
+    Error errorCode = 1;
+    string msg = 2;
+}
